@@ -234,44 +234,22 @@ display:    stp     x29, x30, [sp, -16]!
             mov     x29, sp                   
 
 disp_if_qe: bl      queueEmpty
-            mov     w28, w0
-            cmp     w28, 1                            // Compare queueEmpty return value to TRUE
+            cmp     w0, TRUE                            // Compare queueEmpty return value to TRUE
             b.ne    disp_next                         // If equal to false, jump to return
                                                         // Otherwise, fall through
             ldr     x0, =fmt_qe                         // Reach here if queueFull is true
             bl      printf                              // Print queue overflow message
             b       disp_ret                             // Return out of subroutine
-/*
-  count = tail - head + 1;
-  if (count <= 0)
-    count += QUEUESIZE;
- */  
-              
-disp_next:  adrp    x26, tail_m                         // Get base address of tail         
-            add     x26, x26, :lo12:tail_m              // Add lower 12 bits of tail's address
-            ldr     tail_r, [x26]                       // By using x26 as a pointer, load value of tail
 
-            adrp    x26, head_m
-            add     x26, x26, :lo12:head_m
-            ldr     head_r, [x26]   
-           
-            // Testing 
-            ldr     x0, =fmt_val
-            mov     w1, tail_r
-            bl      printf
-
-            mov     w1, head_r
-            bl      printf
-
-
-            mov     count_r, tail_r                       // count = tail
+disp_next:  mov     count_r, tail_r                       // count = tail
             sub     count_r, count_r, head_r              // count = tail - head
             add     count_r, count_r, 1                 // count = tail - head + 1
 
             cmp     count_r, 0
             b.gt    disp_print
                                                         // if (count <= 0)
-            add     count_r, count_r, QUEUESIZE         //    count += QUEUESIZE          
+            add     count_r, count_r, QUEUESIZE         //    count += QUEUESIZE   
+
 /*
   printf("\nCurrent queue contents:\n");
   i = head;
@@ -298,11 +276,7 @@ disp_print: ldr     x0, =fmt_qc                           // printf("\nCurrent q
 
             b       disp_test
 
-disp_top:   adrp    x26, queue_m
-            add     x26, x26, :lo12:queue_m
-            ldr     base_r, [x26]    
-
-            ldr     x0, =fmt_val                          // printf("  %d", queue[i]);
+disp_top:   ldr     x0, =fmt_val                          // printf("  %d", queue[i]);
             ldr     w1, [base_r, i_r, SXTW 2]
             bl      printf
 
@@ -330,6 +304,21 @@ disp_test:  cmp     j_r, count_r
 disp_ret:   ldp     x29, x30, [sp], 16
             ret  
 
+            
+            /*
+            // Testing 
+            mov     w1, w0              
+            ldr     x0, =fmt_val          
+            bl      printf
+
+            mov     w1, head_r              
+            ldr     x0, =fmt_val          
+            bl      printf
+
+            mov     w1, tail_r              
+            ldr     x0, =fmt_val          
+            bl      printf
+            */
 
 /*
 fmt_qo:     .string "\nQueue overflow! Cannot enqueue into a full queue.\n"    
