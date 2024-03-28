@@ -2,6 +2,13 @@ define(QUEUESIZE, 8)
 define(MODMASK, 0x7)
 define(FALSE, 0)
 define(TRUE, 1)
+define(head_r, w19)
+define(tail_r, w20)
+define(value_r, w21)
+define(count_r, w22)
+define(i_r, w23)
+define(j_r, w24)
+define(base_r, x25)
 
             .data
             .global head_m                              // global int head = -1
@@ -15,7 +22,14 @@ queue_m:    .skip   QUEUESIZE * 4
 
             .text
             .balign 4
-//fmt:        .string     
+fmt_qo:     .string "\nQueue overflow! Cannot enqueue into a full queue.\n"    
+fmt_qu:     .string "\nQueue underflow! Cannot dequeue from an empty queue.\n"
+fmt_qe:     .string "\nEmpty queue\n"
+fmt_qc:     .string "\nCurrent queue contents:\n"
+fmt_val:    .string "  %d"
+fmt_head:   .string " <-- head of queue"
+fmt_tail:   .string " <-- tail of queue"
+fmt_nl:     .string "\n"
 
 /* ------------------------------------------------------------------------------------
 void enqueue(int value)
@@ -34,11 +48,56 @@ void enqueue(int value)
 }
 */
 
+/*
+head_size = 4
+tail_size = 4
+value_size = 4
+
+alloc = -(16 + head_size + tail_size + value_size) & -16
+dealloc = -alloc
+
+head_s = 16
+tail_s = head_s + head_size
+value_s = tail_s + tail_size
+ */
+
             .global enqueue
 enqueue:    stp     x29, x30, [sp, -16]!
             mov     x29, sp
 
-            ldp     x29, x30, [sp], 16
+            mov     value_r, w0                         // Set passed in arg (in w0) to value
+            str     value_r, [x29, value_s]             // Store on stack
+
+enq_if_qf:  bl      queueFull                           // Jump to queueFull
+
+            cmp     w0, TRUE                            // Compare queueFull return value to TRUE
+            b.ne    enq_if_qe                           // If equal to false, jump to enq_if_qe
+                                                        // Otherwise, fall through
+            ldr     x0, =fmt_qo                         // Reach here if queueFull is true
+            bl      printf                              // Print queue overflow message
+            b       enq_ret                             // Return out of subroutine
+            
+enq_if_qe:  bl      queueEmpty
+
+            cmp     w0, TRUE                            // Compare queueEmpty return value to TRUE
+            b.ne    enq_qe_else                         // If equal to false, jump to enq_qe_else
+                                                        // Otherwise, fall through
+            mov     head_r, 0
+            str     head_r, [x29, head_s]
+
+            mov     tail_r, 0         
+            str     tail_r, [x29, tail_s]
+
+            b       enq_next
+enq_qe_else:
+//   } else {
+//    tail = ++tail & MODMASK;
+
+enq_next:
+//   queue[tail] = value;
+
+
+enq_ret:    ldp     x29, x30, [sp], 16
             ret  
 
 
