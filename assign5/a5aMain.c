@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define QUEUESIZE   8
-#define MODMASK     0x7
-#define FALSE       0
-#define TRUE        1
+//#define QUEUESIZE   8
+//#define MODMASK     0x7
+//#define FALSE       0
+// #define TRUE        1
 
 /* Function Prototypes */
 void enqueue(int value);
@@ -13,10 +13,10 @@ int queueFull();
 int queueEmpty();
 void display();
 
-/* Global Variables */
-int queue[QUEUESIZE];
-int head = -1;
-int tail = -1;
+// /* Global Variables */
+// int queue[QUEUESIZE];
+// int head = -1;
+// int tail = -1;
 
 int main()
 {
