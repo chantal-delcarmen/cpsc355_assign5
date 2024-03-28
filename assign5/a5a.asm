@@ -66,7 +66,6 @@ enqueue:    stp     x29, x30, [sp, -16]!
             mov     x29, sp
 
             mov     value_r, w0                         // Set passed in arg (in w0) to value
-            str     value_r, [x29, value_s]             // Store on stack
 
 enq_if_qf:  bl      queueFull                           // Jump to queueFull
 
@@ -82,12 +81,21 @@ enq_if_qe:  bl      queueEmpty
             cmp     w0, TRUE                            // Compare queueEmpty return value to TRUE
             b.ne    enq_qe_else                         // If equal to false, jump to enq_qe_else
                                                         // Otherwise, fall through
-            mov     head_r, 0
-            str     head_r, [x29, head_s]
 
-            mov     tail_r, 0         
-            str     tail_r, [x29, tail_s]
+            adrp    x26, head_m                         // Get base address of head         
+            add     x26, x26, :lo12:head_m              // Add lower 12 bits of head's address
 
+            ldr     head_r, [x26]                       // By using x26 as a pointer, load value of head
+            mov     head_r, 0                           // head = 0
+            str     head_r, [x26]                       // Update head value at its address
+            
+            adrp    x26, tail_m                         // Get base address of tail         
+            add     x26, x26, :lo12:tail_m              // Add lower 12 bits of tail's address
+
+            ldr     tail_r, [x26]                       // By using x26 as a pointer, load value of tail
+            mov     tail_r, 0                           // tail = 0
+            str     tail_r, [x26]                       // Update tail value at its address
+                        
             b       enq_next
 enq_qe_else:
 //   } else {
