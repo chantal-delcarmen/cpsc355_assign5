@@ -149,16 +149,13 @@ deq_if_qe:  bl      queueEmpty
 
 deq_next:   ldr     value_r, [base_r, head_r, SXTW 2]
 
-deq_if:     ldr     head_r, [base_r, head_p]
-            ldr     tail_r, [base_r, tail_p]
-
-            cmp     head_r, tail_r
+deq_if:     cmp     head_r, tail_r
             b.ne    deq_else
 
             mov     head_r, -1
-            mov     tail_r, -1   
-
             str     head_r, [base_r, head_p]
+
+            mov     tail_r, -1
             str     tail_r, [base_r, tail_p]         
 
             b       deq_next2
