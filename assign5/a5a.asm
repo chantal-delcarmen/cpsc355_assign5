@@ -10,6 +10,8 @@ define(count_r, w22)
 define(i_r, w23)
 define(j_r, w24)
 define(base_r, x25)
+define(head_p, x26)
+define(tail_p, x27)
 
             .data
             .global head_m                              // global int head = -1
@@ -74,33 +76,33 @@ enq_if_qe:  bl      queueEmpty
             b.ne    enq_else_qe                         // If equal to false, jump to enq_else_qe
                                                         // Otherwise, fall through
 
-            adrp    x26, head_m                         // Get base address of head         
-            add     x26, x26, :lo12:head_m              // Add lower 12 bits of head's address
-            ldr     head_r, [x26]                       // By using x26 as a pointer, load value of head
+            adrp    head_p, head_m                         // Get base address of head         
+            add     head_p, head_p, :lo12:head_m              // Add lower 12 bits of head's address
+            ldr     head_r, [head_p]                       // By using head_p as a pointer, load value of head
             mov     head_r, 0                           // head = 0
-            str     head_r, [x26]                       // Update head value at its address
+            str     head_r, [head_p]                       // Update head value at its address
             
-            adrp    x26, tail_m                         // Get base address of tail         
-            add     x26, x26, :lo12:tail_m              // Add lower 12 bits of tail's address
-            ldr     tail_r, [x26]                       // By using x26 as a pointer, load value of tail
+            adrp    tail_p, tail_m                         // Get base address of tail         
+            add     tail_p, tail_p, :lo12:tail_m              // Add lower 12 bits of tail's address
+            ldr     tail_r, [tail_p]                       // By using tail_p as a pointer, load value of tail
             mov     tail_r, 0                           // tail = 0
-            str     tail_r, [x26]                       // Update tail value at its address
+            str     tail_r, [tail_p]                       // Update tail value at its address
                         
             b       enq_next
 
 //   } else {
 //    tail = ++tail & MODMASK;
-enq_else_qe:adrp    x26, tail_m                         // Get base address of tail         
-            add     x26, x26, :lo12:tail_m              // Add lower 12 bits of tail's address
-            ldr     tail_r, [x26]                       // By using x26 as a pointer, load value of tail
+enq_else_qe:adrp    tail_p, tail_m                         // Get base address of tail         
+            add     tail_p, tail_p, :lo12:tail_m              // Add lower 12 bits of tail's address
+            ldr     tail_r, [tail_p]                       // By using tail_p as a pointer, load value of tail
             add     tail_r, tail_r, 1                   // tail = ++tail
             and     tail_r, tail_r, MODMASK             // tail = ++tail & MODMASK 
-            str     tail_r, [x26]                       // Update tail value at its address
+            str     tail_r, [tail_p]                       // Update tail value at its address
 
 //   queue[tail] = value;                  
-enq_next:   adrp    x26, tail_m                         // Get base address of tail         
-            add     x26, x26, :lo12:tail_m              // Add lower 12 bits of tail's address
-            ldr     tail_r, [x26]                       
+enq_next:   adrp    tail_p, tail_m                         // Get base address of tail         
+            add     tail_p, tail_p, :lo12:tail_m              // Add lower 12 bits of tail's address
+            ldr     tail_r, [tail_p]                       
 
             adrp    base_r, queue_m                     // Get base address of queue         
             add     base_r, base_r, :lo12:queue_m       // Add lower 12 bits of tail's address
@@ -175,15 +177,15 @@ int queueFull()
 queueFull:  stp     x29, x30, [sp, -16]!
             mov     x29, sp
 
-            adrp    x26, tail_m
-            add     x26, x26, :lo12:tail_m
-            ldr     tail_r, [x26]                       
+            adrp    tail_p, tail_m
+            add     tail_p, tail_p, :lo12:tail_m
+            ldr     tail_r, [tail_p]                       
             add     w27, tail_r, 1                      // w27 = tail + 1
             and     w27, w27, MODMASK                   // w27 = (tail + 1) & MODMASK
 
-            adrp    x26, head_m
-            add     x26, x26, :lo12:head_m
-            ldr     head_r, [x26]                       
+            adrp    head_p, head_m
+            add     head_p, head_p, :lo12:head_m
+            ldr     head_r, [head_p]                       
 
             cmp     w27, head_r                         // Compare [w27 = (tail + 1) & MODMASK] and head
             b.ne    qf_else                             // If not equal, then jump to qf_else
@@ -210,16 +212,16 @@ int queueEmpty()
 queueEmpty: stp     x29, x30, [sp, -16]!
             mov     x29, sp
 
-            adrp    x26, head_m
-            add     x26, x26, :lo12:head_m
-            ldr     head_r, [x26]                          
+            adrp    head_p, head_m
+            add     head_p, head_p, :lo12:head_m
+            ldr     head_r, [head_p]                          
 
             cmp     head_r, -1                          // Compare head and -1
-            b.ne    qe_else                             // If w20 and w21 are !=, then jump to qe_else
-            mov     w0, TRUE                            // If we get here, then w20 and w21 are equal,
+            b.ne    qe_else                             // If head and -1 are !=, then jump to qe_else
+            mov     w0, TRUE                            // If we get here, then head and -1 are equal,
             b       qe_return                           //      so return TRUE
 
-qe_else:    mov     w0, FALSE                           // Jumps here if w20 and w21 are !=, so return FALSE
+qe_else:    mov     w0, FALSE                           // Jumps here if head and -1 are !=, so return FALSE
 
 qe_return:  ldp     x29, x30, [sp], 16                  // Return and exit subroutine
             ret                               
