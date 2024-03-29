@@ -102,8 +102,8 @@ enq_next:   adrp    x26, tail_m                         // Get base address of t
             add     x26, x26, :lo12:tail_m              // Add lower 12 bits of tail's address
             ldr     tail_r, [x26]                       
 
-            adrp    base_r, queue_m                        // Get base address of queue         
-            add     base_r, base_r, :lo12:queue_m          // Add lower 12 bits of tail's address
+            adrp    base_r, queue_m                     // Get base address of queue         
+            add     base_r, base_r, :lo12:queue_m       // Add lower 12 bits of tail's address
             str     value_r, [base_r, tail_r, SXTW 2]     
 
 enq_ret:    ldp     x29, x30, [sp], 16
@@ -121,6 +121,7 @@ int dequeue()
   }
   
   value = queue[head];
+
   if (head == tail) {
     head = tail = -1;
   } else {
@@ -133,7 +134,32 @@ int dequeue()
 dequeue:    stp     x29, x30, [sp, -16]!
             mov     x29, sp
 
-            ldp     x29, x30, [sp], 16
+deq_if_qe:  bl      queueEmpty
+            cmp     w0, TRUE                            // Compare queueEmpty return value to TRUE
+            b.ne    deq_next                            // If equal to false, jump to return
+                                                        // Otherwise, fall through
+            ldr     x0, =fmt_qu                         // Reach here if queueEmpty is true
+            bl      printf                              // Print queue underflow message
+
+            mov     w0, -1                              // Set return value to -1
+            b       deq_ret                             // Return out of subroutine
+
+deq_next:   ldr     value_r, [base_r, head_r, SXTW 2]
+
+deq_if:     cmp     head_r, tail_r
+            b.ne    deq_else
+
+            mov     head_r, -1
+            mov     tail_r, -1            
+
+            b       deq_next2
+
+deq_else:   add     head_r, head_r, 1
+            and     head_r, head_r, MODMASK
+
+deq_next2:  mov     w0, value_r
+
+deq_ret:    ldp     x29, x30, [sp], 16
             ret       
 
 /* ------------------------------------------------------------------------------------
