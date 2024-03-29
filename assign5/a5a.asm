@@ -76,32 +76,32 @@ enq_if_qe:  bl      queueEmpty
             b.ne    enq_else_qe                         // If equal to false, jump to enq_else_qe
                                                         // Otherwise, fall through
 
-            adrp    head_p, head_m                         // Get base address of head         
-            add     head_p, head_p, :lo12:head_m              // Add lower 12 bits of head's address
-            ldr     head_r, [head_p]                       // By using head_p as a pointer, load value of head
+            adrp    head_p, head_m                      // Get base address of head         
+            add     head_p, head_p, :lo12:head_m        // Add lower 12 bits of head's address
+            ldr     head_r, [head_p]                    // By using head_p as a pointer, load value of head
             mov     head_r, 0                           // head = 0
-            str     head_r, [head_p]                       // Update head value at its address
+            str     head_r, [head_p]                    // Update head value at its address
             
-            adrp    tail_p, tail_m                         // Get base address of tail         
-            add     tail_p, tail_p, :lo12:tail_m              // Add lower 12 bits of tail's address
-            ldr     tail_r, [tail_p]                       // By using tail_p as a pointer, load value of tail
+            adrp    tail_p, tail_m                      // Get base address of tail         
+            add     tail_p, tail_p, :lo12:tail_m        // Add lower 12 bits of tail's address
+            ldr     tail_r, [tail_p]                    // By using tail_p as a pointer, load value of tail
             mov     tail_r, 0                           // tail = 0
-            str     tail_r, [tail_p]                       // Update tail value at its address
+            str     tail_r, [tail_p]                    // Update tail value at its address
                         
             b       enq_next
 
 //   } else {
 //    tail = ++tail & MODMASK;
-enq_else_qe:adrp    tail_p, tail_m                         // Get base address of tail         
-            add     tail_p, tail_p, :lo12:tail_m              // Add lower 12 bits of tail's address
-            ldr     tail_r, [tail_p]                       // By using tail_p as a pointer, load value of tail
+enq_else_qe:adrp    tail_p, tail_m                      // Get base address of tail         
+            add     tail_p, tail_p, :lo12:tail_m        // Add lower 12 bits of tail's address
+            ldr     tail_r, [tail_p]                    // By using tail_p as a pointer, load value of tail
             add     tail_r, tail_r, 1                   // tail = ++tail
             and     tail_r, tail_r, MODMASK             // tail = ++tail & MODMASK 
-            str     tail_r, [tail_p]                       // Update tail value at its address
+            str     tail_r, [tail_p]                    // Update tail value at its address
 
 //   queue[tail] = value;                  
-enq_next:   adrp    tail_p, tail_m                         // Get base address of tail         
-            add     tail_p, tail_p, :lo12:tail_m              // Add lower 12 bits of tail's address
+enq_next:   adrp    tail_p, tail_m                      // Get base address of tail         
+            add     tail_p, tail_p, :lo12:tail_m        // Add lower 12 bits of tail's address
             ldr     tail_r, [tail_p]                       
 
             adrp    base_r, queue_m                     // Get base address of queue         
@@ -143,21 +143,29 @@ deq_if_qe:  bl      queueEmpty
             ldr     x0, =fmt_qu                         // Reach here if queueEmpty is true
             bl      printf                              // Print queue underflow message
 
-            mov     w0, -1                              // Set return value to -1
+            mov     value_r, -1
+            mov     w0, value_r                         // Set return value to -1
             b       deq_ret                             // Return out of subroutine
 
 deq_next:   ldr     value_r, [base_r, head_r, SXTW 2]
 
-deq_if:     cmp     head_r, tail_r
+deq_if:     ldr     head_r, [base_r, head_p]
+            ldr     tail_r, [base_r, tail_p]
+
+            cmp     head_r, tail_r
             b.ne    deq_else
 
             mov     head_r, -1
-            mov     tail_r, -1            
+            mov     tail_r, -1   
+
+            str     head_r, [base_r, head_p]
+            str     tail_r, [base_r, tail_p]         
 
             b       deq_next2
 
 deq_else:   add     head_r, head_r, 1
             and     head_r, head_r, MODMASK
+            str     head_r, [base_r, head_p]            
 
 deq_next2:  mov     w0, value_r
 
